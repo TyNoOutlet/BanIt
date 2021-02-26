@@ -12,7 +12,7 @@ local DSS = game:GetService("DataStoreService")
 local banStore = DSS:GetDataStore("BanStore")
 
 local success, data = pcall(function()
-	return banStore:GetAsync("BansTest4")
+	return banStore:GetAsync("Bans")
 end)
 
 if success and not data then
@@ -25,7 +25,7 @@ end
 
 local function saveData()
 	local suc, err = pcall(function()
-		return banStore:SetAsync("BansTest4", data)
+		return banStore:SetAsync("Bans", data)
 	end)
 	if not suc and err then
 		warn(err)

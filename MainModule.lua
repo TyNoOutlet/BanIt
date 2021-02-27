@@ -74,4 +74,17 @@ function BanIt.Unban(plrUser)
 	end
 end
 
+function BanIt.ServerUnban(plrUser)
+	local plr = Players:GetUserIdFromNameAsync(plrUser)
+	if plr then
+		local pos = table.find(serverBanTable, plr)
+		print(pos)
+		table.remove(serverBanTable, pos)
+		print(serverBanTable[pos])
+		saveData()
+	else
+		warn("Player not found in database.")
+	end
+end
+
 return BanIt

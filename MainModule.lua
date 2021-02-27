@@ -48,7 +48,7 @@ function BanIt.ServerBan(plrUser, reason)
 	local plr = Players:GetUserIdFromNameAsync(plrUser)
 	table.insert(serverBanTable, plr)
 	if Players:FindFirstChild(plrUser) then
-		plrUser:Kick(reason or "Banned from the server!")
+		Players[plrUser]:Kick(reason or "Banned from the server!")
 	end
 end
 
@@ -57,7 +57,7 @@ function BanIt.Ban(plrUser, reason)
 	table.insert(data, plr)
 	saveData()
 	if Players:FindFirstChild(plrUser) then
-		plrUser:Kick(reason or "Banned from the game!")
+		Players[plrUser]:Kick(reason or "Banned from the game!")
 	end
 end
 
@@ -65,7 +65,9 @@ function BanIt.Unban(plrUser)
 	local plr = Players:GetUserIdFromNameAsync(plrUser)
 	if plr then
 		local pos = table.find(data, plr)
+		print(pos)
 		table.remove(data, pos)
+		print(data[pos])
 		saveData()
 	else
 		warn("Player not found in database.")

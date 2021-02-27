@@ -57,4 +57,15 @@ function BanIt.Ban(plrUser, reason)
 	plrUser:Kick(reason or "Banned from the game!")
 end
 
+function BanIt.Unban(plrUser)
+	local plr = Players:GetUserIdFromNameAsync(plrUser)
+	if plr then
+		local pos = table.find(data, plr)
+		table.remove(data, pos)
+		saveData()
+	else
+		warn("Player not found in database.")
+	end
+end
+
 return BanIt

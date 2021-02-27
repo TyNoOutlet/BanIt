@@ -10,7 +10,7 @@ local serverBanTable = {}
 
 local Players = game:GetService("Players")
 local DSS = game:GetService("DataStoreService")
-local banStore = DSS:GetDataStore("BanStore")
+local banStore = DSS:GetDataStore("BanStore"..game.PlaceID.."123456789")
 
 local success, data = pcall(function()
 	return banStore:GetAsync("Bans")

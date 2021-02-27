@@ -45,13 +45,13 @@ end)
 local BanIt = {}
 
 function BanIt.ServerBan(plrUser, reason)
-	local plr = plrUser.UserId
+	local plr = Players:GetUserIdFromNameAsync(plrUser)
 	table.insert(serverBanTable, plr)
 	plrUser:Kick(reason or "Banned from the server!")
 end
 
 function BanIt.Ban(plrUser, reason)
-	local plr = plrUser.UserId
+	local plr = Players:GetUserIdFromNameAsync(plrUser)
 	table.insert(data, plr)
 	saveData()
 	plrUser:Kick(reason or "Banned from the game!")

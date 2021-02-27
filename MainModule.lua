@@ -30,22 +30,19 @@ local function saveData()
 	if not suc and err then
 		warn(err)
 	elseif suc then
-		print("Successfully saved")
-		for i, v in ipairs(data) do
-			print(v)
-		end
+		print("BanIt | Successfully saved")
 	end
 end
-
--- // MODULE
-
-local BanIt = {}
 
 Players.PlayerAdded:Connect(function(plr)
 	if table.find(data, plr.UserId) then
 		plr:Kick("Banned from the game!")
 	end
 end)
+
+-- // MODULE
+
+local BanIt = {}
 
 function BanIt.ServerBan(plrUser, reason)
 	local plr = plrUser.UserId

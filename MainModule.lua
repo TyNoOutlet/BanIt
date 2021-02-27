@@ -35,7 +35,7 @@ local function saveData()
 end
 
 Players.PlayerAdded:Connect(function(plr)
-	if table.find(data, plr.UserId) then
+	if table.find(data, plr.UserId) or table.find(serverBanTable, plr.UserId) then
 		plr:Kick("Banned from the game!")
 	end
 end)

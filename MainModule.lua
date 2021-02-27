@@ -1,7 +1,8 @@
 -- // METADATA
 -- Creator: Ty_Scripts
 -- Date created: 2/26/2021 16:00 UTC-5
--- More info: -- link --
+-- More info: https://devforum.roblox.com/t/banit-simple-ban-module-for-anyone/1074218
+-- Version: 5.1
 
 -- // VARIABLES
 

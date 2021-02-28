@@ -2,7 +2,7 @@
 -- Creator: Ty_Scripts
 -- Date created: 2/26/2021 16:00 UTC-5
 -- More info: https://devforum.roblox.com/t/banit-simple-ban-module-for-anyone/1074218
--- Version: 6
+-- Version: 6.01
 
 -- // VARIABLES
 
@@ -10,8 +10,8 @@ local serverBanTable = {}
 
 local Players = game:GetService("Players")
 local DSS = game:GetService("DataStoreService")
-local banStore = DSS:GetDataStore("BanStore")
-local timedBanStore = DSS:GetDataStore("TimedBanStore")
+local banStore = DSS:GetDataStore("BanStore" .. game.PlaceId .. "123456789")
+local timedBanStore = DSS:GetDataStore("TimedBanStore" .. game.PlaceId .. "123456789")
 local data = nil
 local data2 = nil
 

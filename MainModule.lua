@@ -72,7 +72,7 @@ Players.PlayerAdded:Connect(function(plr)
 		plr:Kick("Banned from the game!")
 	elseif data2[tostring(plr.UserId)] ~= nil then
 		local strTable = string.split(data2[tostring(plr.UserId)], ";")
-		local timeLeft = os.time() - tostring(strTable[1])
+		local timeLeft = os.time() - tonumber(strTable[1])
 		local num = tonumber(strTable[2]) 
 		if num - timeLeft >= 1 then
 			plr:Kick(tostring(num - timeLeft) .. " seconds left on ban.")

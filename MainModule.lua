@@ -2,14 +2,15 @@
 -- Creator: Ty_Scripts
 -- Date created: 2/26/2021 16:00 UTC-5
 -- More info: https://devforum.roblox.com/t/banit-simple-ban-module-for-anyone/1074218
--- Version: 6.01
+-- Version: 7
 
 -- // VARIABLES
 
-local serverBanTable = {} 
+local serverBanTable = {}
 
 local Players = game:GetService("Players")
 local DSS = game:GetService("DataStoreService")
+local MS = game:GetService("MessagingService")
 local banStore = DSS:GetDataStore("BanStore" .. game.PlaceId .. "123456789")
 local timedBanStore = DSS:GetDataStore("TimedBanStore" .. game.PlaceId .. "123456789")
 local data = nil
@@ -82,50 +83,79 @@ Players.PlayerAdded:Connect(function(plr)
 	end
 end)
 
+local subSuc, subCon = pcall(function()
+	return MS:SubscribeAsync("Ban", function(message)
+		local data = message.Data
+		local dataTable = string.split(data, "⌐")
+		if Players:FindFirstChild(dataTable[1]) then
+			Players:FindFirstChild(dataTable[1]):Kick(dataTable[2] or "You have been banned.")
+		end
+	end)
+end)
 -- // MODULE
 
 local BanIt = {}
 
 function BanIt.ServerBan(plrUser, reason)
-	local plr = Players:GetUserIdFromNameAsync(plrUser)
-	table.insert(serverBanTable, plr)
-	if Players:FindFirstChild(plrUser) then
-		Players[plrUser]:Kick(reason or "Banned from the server!")
+	local success = pcall(function()
+		plr = Players:GetUserIdFromNameAsync(plrUser)
+	end)
+	if success and plr then
+		table.insert(serverBanTable, plr)
+		if Players:FindFirstChild(plrUser) then
+			Players[plrUser]:Kick(reason or "Banned from the server!")
+		end
+	else
+		warn("Player not found in database. Call may have failed, try again.")
 	end
 end
 
 function BanIt.Ban(plrUser, reason)
-	local plr = Players:GetUserIdFromNameAsync(plrUser)
-	table.insert(data, plr)
-	saveData()
-	if Players:FindFirstChild(plrUser) then
-		Players[plrUser]:Kick(reason or "Banned from the game!")
+	local success = pcall(function()
+		plr = Players:GetUserIdFromNameAsync(plrUser)
+	end)
+	if success and plr then
+		table.insert(data, plr)
+		saveData()
+		if Players:FindFirstChild(plrUser) then
+			Players[plrUser]:Kick(reason or "Banned from the game!")
+		else
+			local s, result = pcall(function()
+				return MS:PublishAsync("Ban", plrUser .. "⌐" .. reason)
+			end)
+		end
+	else
+		warn("Player not found in database. Call may have failed, try again.")
 	end
 end
 
 function BanIt.Unban(plrUser)
-	local plr = Players:GetUserIdFromNameAsync(plrUser)
-	if plr then
+	local success = pcall(function()
+		plr = Players:GetUserIdFromNameAsync(plrUser)
+	end)
+	if success and plr then
 		local pos = table.find(data, plr)
 		print(pos)
 		table.remove(data, pos)
 		print(data[pos])
 		saveData()
 	else
-		warn("Player not found in database.")
+		warn("Player not found in database. Call may have failed, try again.")
 	end
 end
 
 function BanIt.ServerUnban(plrUser)
-	local plr = Players:GetUserIdFromNameAsync(plrUser)
-	if plr then
+	local success = pcall(function()
+		plr = Players:GetUserIdFromNameAsync(plrUser)
+	end)
+	if success and plr then
 		local pos = table.find(serverBanTable, plr)
 		print(pos)
 		table.remove(serverBanTable, pos)
 		print(serverBanTable[pos])
 		saveData()
 	else
-		warn("Player not found in database.")
+		warn("Player not found in database. Call may have failed, try again.")
 	end
 end
 
@@ -137,16 +167,24 @@ function BanIt.TimedBan(plrUser, num, numType)
 	elseif numType:lower() == "days" then
 		num *= 86400
 	end
-	local plr = Players:GetUserIdFromNameAsync(plrUser)
-	print(typeof(plr))
-	local current = os.time()
-	data2[plr] = current .. ";" .. num
-	print(data2[plr])
-	saveTimeData()
-	if Players:FindFirstChild(plrUser) then
-		Players[plrUser]:Kick("Banned for " .. num .. " " .. numType .. " from the game.")
+	local success = pcall(function()
+		plr = Players:GetUserIdFromNameAsync(plrUser)
+	end)
+	if success and plr then
+		local current = os.time()
+		data2[plr] = current .. ";" .. num
+		print(data2[plr])
+		saveTimeData()
+		if Players:FindFirstChild(plrUser) then
+			Players[plrUser]:Kick("Banned for " .. num .. " " .. numType .. " from the game.")
+		else
+			local s, result = pcall(function()
+				return MS:PublishAsync("Ban", plrUser .. "⌐" .. "Banned for " .. num .. " " .. numType .. " from the game.")
+			end)
+		end
+	else
+		warn("Player not found in database. Call may have failed, try again.")
 	end
 end
-
 
 return BanIt

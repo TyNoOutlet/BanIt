@@ -75,7 +75,7 @@ Players.PlayerAdded:Connect(function(Plr)
 end)
 
 xpcall(function()
-	return MessagingService:SubscribeAsync("Ban", function(Message)
+	MessagingService:SubscribeAsync("Ban", function(Message)
 		local dataTable = string.split(Message.Data, "⌐")
 		if Players:FindFirstChild(dataTable[1]) then
 			Players:FindFirstChild(dataTable[1]):Kick(dataTable[2] or "You have been banned.")
@@ -113,7 +113,7 @@ function BanIt.Ban(PlrInstance, Reason)
 			FoundPlayer:Kick(Reason or "Banned from the game!")
 		else
 			xpcall(function()
-				return MessagingService:PublishAsync("Ban", PlrInstance .. "⌐" .. Reason)
+				MessagingService:PublishAsync("Ban", PlrInstance .. "⌐" .. Reason)
 			end, warn)
 		end
 	end, function(Err)
@@ -169,7 +169,7 @@ function BanIt.TimedBan(PlrInstance, BanLenght, TimeType)
 			Players[PlrInstance]:Kick("Banned for " .. BanLenght .. " " .. TimeType .. " from the game.")
 		else
 			xpcall(function()
-				return MessagingService:PublishAsync("Ban", PlrInstance .. "⌐" .. "Banned for " .. BanLenght .. " " .. TimeType .. " from the game.")
+				MessagingService:PublishAsync("Ban", PlrInstance .. "⌐" .. "Banned for " .. BanLenght .. " " .. TimeType .. " from the game.")
 			end, warn)
 		end
 	end, function(Err)

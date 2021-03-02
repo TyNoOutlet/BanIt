@@ -14,7 +14,7 @@ local MS = game:GetService("MessagingService")
 local banStore = DSS:GetDataStore("BanStore" .. game.PlaceId .. "123456789")
 local timedBanStore = DSS:GetDataStore("TimedBanStore" .. game.PlaceId .. "123456789")
 local shadowBanStore = DSS:GetDataStore("ShadowBanStore".. game.PlaceId .. "123456789")
-local globalBans, timedBans, shadowBans = {}, {}, {}
+local globalBans, timedBans, shadowBans = nil, nil, nil
 
 xpcall(function()
 	globalBans = banStore:GetAsync("Bans") or {}
@@ -64,19 +64,51 @@ local function saveShadowBanData()
 	end)
 end
 
-local function shadowBan(plr)
-	coroutine.wrap(function()
-		workspace:WaitForChild(plr.Name)
-		plr.Character.Humanoid.WalkSpeed = 4
-		plr.Character.Humanoid.JumpPower = 12.5
-		wait(45)
-		plr:Kick(".ROBLOXWALKSPEEDJUMPPOWER failure. Please rejoin.\nIncident ticket: 0x4F5A3C4")
-	end)()
+local ShadowBan
+do
+	local ShadowBanMessages = {
+		".ROBLOXWALKSPEEDJUMPPOWER failure. Please rejoin.\nIncident ticket: 0x4F5A3C4", "ACLI: Loading Error [Took Too Long (>10 Minutes)]",
+		"Loading Error: PlayerGui Missing (Waited 10 Minutes)", "Invalid Client Data (r10002)",
+		"Communication Key Error (r10003)", "Invalid Remote Data (r10004)",
+		"Client Not Responding [Client hasn't checked in >5 minutes]", "Error. Client not firing remote.",
+		"Invalid remote key generation.", "Remote key invalid.",
+		"System Auth incorrect key",
+	}
+	
+	local function onShadowBanChar(playerCharacter)
+		local humanoid = playerCharacter:FindFirstChildWhichIsA("Humanoid") or playerCharacter:WaitForChild("Humanoid")
+		humanoid.WalkSpeed = math.random(1, 1500) / 100
+		humanoid.JumpPower = math.random(1, 4000) / 100
+		if math.random(1, 4) == 2 then -- // Makes the character server owned creating more input lag. Also prevents movement exploiters.
+			for _, v in ipairs(playerCharacter:GetChildren()) do
+				if v:IsA("BasePart") and v:CanSetNetworkOwnership() then
+					v:SetNetworkOwner(nil)
+				end
+			end
+		end
+		if math.random(1, 3) == 2 then -- // Makes their character not able to turn unless in first person
+			humanoid.AutoRotate = false
+		else
+			hu
+		end
+		wait(math.random(29, 70))
+		plr:Kick(ShadowBanMessages[math.random(1, #ShadowBanMessages)])	
+	end
+	
+	shadowBan = function(plr)
+		if math.random(1, 6) == 2 then -- // Makes their character appear as the default studio testing character.
+			plr.CanLoadCharacterAppearance = false
+		end
+		if plr.Character then
+			coroutine.wrap(onShadowBanChar)(plr.Character)
+		end
+		plr.CharacterAdded:Connect(onShadowBanChar)
+	end
 end
 
 Players.PlayerAdded:Connect(function(plr)
 	if table.find(globalBans, plr.UserId) or table.find(serverBanTable, plr.UserId) then
-		plr:Kick("Banned from the game!")
+		plr:Kick("You are banned from the game!")
 	elseif timedBans[tostring(plr.UserId)] ~= nil then
 		for k, v in pairs(timedBans) do
 			print(k, v)
@@ -90,7 +122,7 @@ Players.PlayerAdded:Connect(function(plr)
 			timedBans[tostring(plr.UserId)] = nil
 			saveTimeData()
 			if table.find(globalBans, plr.UserId) or table.find(serverBanTable, plr.UserId) then
-				plr:Kick("Banned from the game!")
+				plr:Kick("You are banned from the game!")
 			elseif table.find(shadowBans, plr.UserId) then
 				shadowBan(plr)
 			else
@@ -108,7 +140,7 @@ xpcall(function()
 	return MS:SubscribeAsync("Ban", function(message)
 		local dataTable = string.split(message.Data, "⌐")
 		if Players:FindFirstChild(dataTable[1]) then
-			Players:FindFirstChild(dataTable[1]):Kick(dataTable[2] or "You have been banned.")
+			Players:FindFirstChild(dataTable[1]):Kick(dataTable[2] or "You have been banned from the game.")
 		end
 	end)
 end, function(err)
@@ -136,7 +168,7 @@ function BanIt.ServerBan(plrUser, reason)
 		table.insert(serverBanTable, plr)
 		local potentialPlr = Players:FindFirstChild(plrUser)
 		if potentialPlr then
-			potentialPlr:Kick(reason or "Banned from the server!")
+			potentialPlr:Kick(reason or "You are banned from the server!")
 		end
 	end, function(err)
 		warn("Error: " .. err)
@@ -150,7 +182,7 @@ function BanIt.Ban(plrUser, reason)
 		saveData()
 		local potentialPlr = Players:FindFirstChild(plrUser)
 		if potentialPlr then
-			potentialPlr:Kick(reason or "Banned from the game!")
+			potentialPlr:Kick(reason or "You are banned from the game!")
 		else
 			xpcall(function()
 				return MS:PublishAsync("Ban", plrUser .. "⌐" .. reason)

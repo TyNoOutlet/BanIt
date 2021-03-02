@@ -2,7 +2,7 @@
 -- Creator: Ty_Scripts
 -- Date created: 2/26/2021 16:00 UTC-5
 -- More info: https://devforum.roblox.com/t/banit-simple-ban-module-for-anyone/1074218
--- Version: 7
+-- Version: 8
 
 -- // VARIABLES
 
@@ -13,178 +13,234 @@ local DSS = game:GetService("DataStoreService")
 local MS = game:GetService("MessagingService")
 local banStore = DSS:GetDataStore("BanStore" .. game.PlaceId .. "123456789")
 local timedBanStore = DSS:GetDataStore("TimedBanStore" .. game.PlaceId .. "123456789")
-local data = nil
-local data2 = nil
+local shadowBanStore = DSS:GetDataStore("ShadowBanStore".. game.PlaceId .. "123456789")
+local globalBans, timedBans, shadowBans = nil, nil, nil
 
-local success, data = pcall(function()
-	return banStore:GetAsync("Bans")
+xpcall(function()
+	globalBans = banStore:GetAsync("Bans") or {}
+end, function(err)
+	warn("BanIt | DataStore failed. Try turning on Studio Access to API Services. Error: " .. err)
 end)
 
-if success and not data then
-	data = {}
-elseif not success then
-	warn("DataStore failed. Try turning on Studio Access to API Services.")
-end
-
-local succ, err = pcall(function()
-	data2 = timedBanStore:GetAsync("TimedBans")
+xpcall(function()
+	timedBans = timedBanStore:GetAsync("TimedBans") or {}
+end, function(err)
+	warn("BanIt | DataStore failed. Try turning on Studio Access to API Services. Error: " .. err)
 end)
 
-if succ and data2 == nil then
-	data2 = {}
-	print("There was no data")
-elseif not succ then
-	warn("DataStore failed. Try turning on Studio Access to API Services.")
-elseif succ and err then
-	warn(err)
-end
+xpcall(function()
+	shadowBans = shadowBanStore:GetAsync("ShadowBans") or {}
+end, function(err)
+	warn("BanIt | DataStore failed. Try turning on Studio Access to API Services. Error: " .. err)
+end)
+
 
 -- // FUNCTIONS
 
 local function saveData()
-	local suc, err = pcall(function()
-		return banStore:SetAsync("Bans", data)
+	xpcall(function()
+		banStore:SetAsync("Bans", globalBans)
+		print("BanIt | Successfully saved!")
+	end, function(err)
+		warn("BanIt | Data saving failed! Error: " .. err)
 	end)
-	if not suc and err then
-		warn(err)
-	elseif suc then
-		print("BanIt | Successfully saved")
-	end
 end
 
 local function saveTimeData()
-	local yes, no = pcall(function()
-		return timedBanStore:SetAsync("TimedBans", data2)
+	xpcall(function()
+		timedBanStore:SetAsync("TimedBans", timedBans)
+		print("BanIt | Successfully saved!")
+	end, function(err)
+		warn("BanIt | Data saving failed! Error: " .. err)
 	end)
-	if not yes and no then
-		warn(no)
-	elseif yes then
-		print("BanIt | Successfully saved")
-		for k, v in pairs(data2) do
-			print(k, v)
-		end
-	elseif not yes then
-		print("idk")
-	end
+end
+
+local function saveShadowBanData()
+	xpcall(function()
+		shadowBanStore:SetAsync("ShadowBans", shadowBans)
+		print("BanIt | Successfully saved!")
+	end, function(err)
+		warn("BanIt | Data saving failed! Error: " .. err)
+	end)
+end
+
+local function shadowBan(plr)
+	coroutine.wrap(function()
+		workspace:WaitForChild(plr.Name)
+		plr.Character.Humanoid.WalkSpeed = 4
+		plr.Character.Humanoid.JumpPower = 12.5
+		wait(45)
+		plr:Kick(".ROBLOXWALKSPEEDJUMPPOWER failure. Please rejoin.\nIncident ticket: 0x4F5A3C4")
+	end)()
 end
 
 Players.PlayerAdded:Connect(function(plr)
-	if table.find(data, plr.UserId) or table.find(serverBanTable, plr.UserId) then
+	if table.find(globalBans, plr.UserId) or table.find(serverBanTable, plr.UserId) then
 		plr:Kick("Banned from the game!")
-	elseif data2[tostring(plr.UserId)] ~= nil then
-		local strTable = string.split(data2[tostring(plr.UserId)], ";")
-		local timeLeft = os.time() - tonumber(strTable[1])
-		local num = tonumber(strTable[2]) 
-		if num - timeLeft >= 1 then
-			plr:Kick(tostring(num - timeLeft) .. " seconds left on ban.")
+	elseif timedBans[tostring(plr.UserId)] ~= nil then
+		for k, v in pairs(timedBans) do
+			print(k, v)
 		end
-	elseif data2[tostring(plr.UserId)] == nil then
-		print("No data for user " .. plr.Name)
+		local banData = string.split(timedBans[tostring(plr.UserId)], ";")
+		local timeLeft = os.time() - tonumber(banData[1])
+		local banLength = tonumber(banData[2]) 
+		if banLength - timeLeft >= 1 then
+			plr:Kick(tostring(banLength - timeLeft) .. " seconds left on ban.")
+		else
+			timedBans[tostring(plr.UserId)] = nil
+			saveTimeData()
+			if table.find(globalBans, plr.UserId) or table.find(serverBanTable, plr.UserId) then
+				plr:Kick("Banned from the game!")
+			elseif table.find(shadowBans, plr.UserId) then
+				shadowBan(plr)
+			else
+				print("No data found")
+			end
+		end
+	elseif table.find(shadowBans, plr.UserId) then
+		shadowBan(plr)
+	else
+		print("No data found")
 	end
 end)
 
-local subSuc, subCon = pcall(function()
+xpcall(function()
 	return MS:SubscribeAsync("Ban", function(message)
-		local data = message.Data
-		local dataTable = string.split(data, "⌐")
+		local dataTable = string.split(message.Data, "⌐")
 		if Players:FindFirstChild(dataTable[1]) then
 			Players:FindFirstChild(dataTable[1]):Kick(dataTable[2] or "You have been banned.")
 		end
 	end)
+end, function(err)
+	warn("BanIt | Subscribing to ban list failed! Error: " .. err)
 end)
+
+xpcall(function()
+	return MS:SubscribeAsync("ShadowBan", function(message)
+		local potentialPlr = Players:FindFirstChild(message.Data)
+		if potentialPlr then
+			shadowBan(potentialPlr)
+		end
+	end)
+end, function(err)
+	warn("BanIt | Subscribing to ban list failed! Error: " .. err)
+end)
+
 -- // MODULE
 
 local BanIt = {}
 
 function BanIt.ServerBan(plrUser, reason)
-	local success = pcall(function()
-		plr = Players:GetUserIdFromNameAsync(plrUser)
-	end)
-	if success and plr then
+	xpcall(function()
+		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
 		table.insert(serverBanTable, plr)
-		if Players:FindFirstChild(plrUser) then
-			Players[plrUser]:Kick(reason or "Banned from the server!")
+		local potentialPlr = Players:FindFirstChild(plrUser)
+		if potentialPlr then
+			potentialPlr:Kick(reason or "Banned from the server!")
 		end
-	else
-		warn("Player not found in database. Call may have failed, try again.")
-	end
+	end, function(err)
+		warn("Error: " .. err)
+	end)
 end
 
 function BanIt.Ban(plrUser, reason)
-	local success = pcall(function()
-		plr = Players:GetUserIdFromNameAsync(plrUser)
-	end)
-	if success and plr then
-		table.insert(data, plr)
+	xpcall(function()
+		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
+		table.insert(globalBans, plr)
 		saveData()
-		if Players:FindFirstChild(plrUser) then
-			Players[plrUser]:Kick(reason or "Banned from the game!")
+		local potentialPlr = Players:FindFirstChild(plrUser)
+		if potentialPlr then
+			potentialPlr:Kick(reason or "Banned from the game!")
 		else
-			local s, result = pcall(function()
+			xpcall(function()
 				return MS:PublishAsync("Ban", plrUser .. "⌐" .. reason)
+			end, function(err)
+				warn("Ban data failed to publish. Error: " .. err)
 			end)
 		end
-	else
-		warn("Player not found in database. Call may have failed, try again.")
-	end
+	end, function(err)
+		warn("Error: " .. err)
+	end)
 end
 
 function BanIt.Unban(plrUser)
-	local success = pcall(function()
-		plr = Players:GetUserIdFromNameAsync(plrUser)
-	end)
-	if success and plr then
-		local pos = table.find(data, plr)
-		print(pos)
-		table.remove(data, pos)
-		print(data[pos])
+	xpcall(function()
+		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
+		local pos = table.find(globalBans, plr)
+		table.remove(globalBans, pos)
 		saveData()
-	else
-		warn("Player not found in database. Call may have failed, try again.")
-	end
+	end, function(err)
+		warn("Error: " .. err)
+	end)
 end
 
 function BanIt.ServerUnban(plrUser)
-	local success = pcall(function()
-		plr = Players:GetUserIdFromNameAsync(plrUser)
-	end)
-	if success and plr then
+	xpcall(function()
+		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
 		local pos = table.find(serverBanTable, plr)
-		print(pos)
 		table.remove(serverBanTable, pos)
-		print(serverBanTable[pos])
-		saveData()
-	else
-		warn("Player not found in database. Call may have failed, try again.")
-	end
+	end, function(err)
+		warn("Error: " .. err)
+	end)
 end
 
 function BanIt.TimedBan(plrUser, num, numType)
-	if numType:lower() == "minutes" then
-		num *= 60
-	elseif numType:lower() == "hours" then
-		num *= 3600
-	elseif numType:lower() == "days" then
-		num *= 86400
-	end
-	local success = pcall(function()
-		plr = Players:GetUserIdFromNameAsync(plrUser)
-	end)
-	if success and plr then
+	xpcall(function()
+		if numType:lower() == "minutes" then
+			num *= 60
+		elseif numType:lower() == "hours" then
+			num *= 3600
+		elseif numType:lower() == "days" then
+			num *= 86400
+		end
+		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
 		local current = os.time()
-		data2[plr] = current .. ";" .. num
-		print(data2[plr])
+		timedBans[plr] = current .. ";" .. num
+		print(timedBans[plr])
 		saveTimeData()
 		if Players:FindFirstChild(plrUser) then
 			Players[plrUser]:Kick("Banned for " .. num .. " " .. numType .. " from the game.")
 		else
-			local s, result = pcall(function()
-				return MS:PublishAsync("Ban", plrUser .. "⌐" .. "Banned for " .. num .. " " .. numType .. " from the game.")
+			xpcall(function()
+				MS:PublishAsync("Ban", plrUser .. "⌐" .. "Banned for " .. num .. " " .. numType .. " from the game.")
+			end, function(err)
+				warn("Error publishing ban data. Error: " .. err)
 			end)
 		end
-	else
-		warn("Player not found in database. Call may have failed, try again.")
-	end
+	end, function(err)
+		warn("Error: " .. err)
+	end)
+end
+
+function BanIt.ShadowBan(plrUser)
+	xpcall(function()
+		local plr = Players:FindFirstChild(plrUser)
+		local plrId = assert(Players:GetUserIdFromNameAsync(plrUser), "Not found a player with that name")
+		table.insert(shadowBans, plrId)
+		saveShadowBanData()
+		if plr then
+			shadowBan(plr)
+		else
+			xpcall(function()
+				MS:PublishAsync("ShadowBan", plrUser)
+			end, function(err)
+				warn("Error publishing ban data. Error: " .. err)
+			end)
+		end
+	end, function(err)
+		warn(err)
+	end)
+end
+
+function BanIt.ShadowUnban(plrUser)
+	xpcall(function()
+		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "Not found a player with that name")
+		local pos = table.find(shadowBans, plr)
+		table.remove(shadowBans, pos)
+		saveShadowBanData()
+	end, function(err)
+		warn(err)
+	end)
 end
 
 return BanIt

@@ -79,7 +79,7 @@ do
 		local humanoid = playerCharacter:FindFirstChildWhichIsA("Humanoid") or playerCharacter:WaitForChild("Humanoid")
 		humanoid.WalkSpeed = math.random(1, 1500) / 100
 		humanoid.JumpPower = math.random(1, 4000) / 100
-		if math.random(1, 4) == 2 then -- // Makes the character server owned creating more input lag. Also prevents movement exploiters.
+		if math.random(1, 2) == 2 then -- // Makes the character server owned creating more input lag. Also prevents movement exploiters.
 			for _, v in ipairs(playerCharacter:GetChildren()) do
 				if v:IsA("BasePart") and v:CanSetNetworkOwnership() then
 					v:SetNetworkOwner(nil)
@@ -99,9 +99,7 @@ do
 		if math.random(1, 6) == 2 then -- // Makes their character appear as the default studio testing character.
 			plr.CanLoadCharacterAppearance = false
 		end
-		if plr.Character then
-			coroutine.wrap(onShadowBanChar)(plr.Character)
-		end
+		coroutine.wrap(onShadowBanChar)(plr.Character or plr.CharacterAdded:Wait())
 		plr.CharacterAdded:Connect(onShadowBanChar)
 	end
 end

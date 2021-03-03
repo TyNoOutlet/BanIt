@@ -14,7 +14,7 @@ local MS = game:GetService("MessagingService")
 local banStore = DSS:GetDataStore("BanStore" .. game.PlaceId .. "123456789")
 local timedBanStore = DSS:GetDataStore("TimedBanStore" .. game.PlaceId .. "123456789")
 local shadowBanStore = DSS:GetDataStore("ShadowBanStore".. game.PlaceId .. "123456789")
-local globalBans, timedBans, shadowBans = nil, nil, nil
+local globalBans, timedBans, shadowBans = {}, {}, {}
 
 xpcall(function()
 	globalBans = banStore:GetAsync("Bans") or {}

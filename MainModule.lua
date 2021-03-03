@@ -64,19 +64,36 @@ local function saveShadowBanData()
 	end)
 end
 
+
+local shadowBanMessages = {
+	".ROBLOXWALKSPEEDJUMPPOWER failure. Please rejoin.\nIncident ticket: 0x4F5A3C4", "ACLI: Loading Error [Took Too Long (>10 Minutes)]",
+	"Loading Error: PlayerGui Missing (Waited 10 Minutes)", "Invalid Client Data (r10002)",
+	"Communication Key Error (r10003)", "Invalid Remote Data (r10004)",
+	"Error. Client not firing remote.", "System Auth incorrect key",
+	"Invalid remote key generation.", "Remote key invalid.",
+}
+	
+local function onShadowBanChar(playerCharacter)
+	local humanoid = playerCharacter:FindFirstChildWhichIsA("Humanoid") or playerCharacter:WaitForChild("Humanoid")
+	humanoid.WalkSpeed, humanoid.JumpPower, humanoid.AutoRotate = math.random(10, 1590) / 100, math.random(10, 4900) / 100, math.random(1, 4) == 2
+	for _, v in ipairs(playerCharacter:GetChildren()) do -- // Makes the character server owned creating more input lag. Also prevents movement exploiters.
+		if v:IsA("BasePart") and v:CanSetNetworkOwnership() then
+			v:SetNetworkOwner(nil)
+		end
+	end
+	wait(math.random(25, 99))
+	plr:Kick(math.random(1, 4) == 3 and "Client Not Responding [Client hasn't checked in >5 minutes]" or shadowBanMessages[math.random(1, #shadowBanMessages)])	
+end
+
 local function shadowBan(plr)
-	coroutine.wrap(function()
-		workspace:WaitForChild(plr.Name)
-		plr.Character.Humanoid.WalkSpeed = 4
-		plr.Character.Humanoid.JumpPower = 12.5
-		wait(45)
-		plr:Kick(".ROBLOXWALKSPEEDJUMPPOWER failure. Please rejoin.\nIncident ticket: 0x4F5A3C4")
-	end)()
+	plr.CanLoadCharacterAppearance = math.random(1, 6) == 2 -- // Makes their character appear as the default studio testing character.
+	coroutine.wrap(onShadowBanChar)(plr.Character or plr.CharacterAdded:Wait())
+	plr.CharacterAdded:Connect(onShadowBanChar)
 end
 
 Players.PlayerAdded:Connect(function(plr)
 	if table.find(globalBans, plr.UserId) or table.find(serverBanTable, plr.UserId) then
-		plr:Kick("Banned from the game!")
+		plr:Kick("You are banned from the game!")
 	elseif timedBans[tostring(plr.UserId)] ~= nil then
 		for k, v in pairs(timedBans) do
 			print(k, v)
@@ -90,7 +107,7 @@ Players.PlayerAdded:Connect(function(plr)
 			timedBans[tostring(plr.UserId)] = nil
 			saveTimeData()
 			if table.find(globalBans, plr.UserId) or table.find(serverBanTable, plr.UserId) then
-				plr:Kick("Banned from the game!")
+				plr:Kick("You are banned from the game!")
 			elseif table.find(shadowBans, plr.UserId) then
 				shadowBan(plr)
 			else
@@ -108,7 +125,7 @@ xpcall(function()
 	return MS:SubscribeAsync("Ban", function(message)
 		local dataTable = string.split(message.Data, "⌐")
 		if Players:FindFirstChild(dataTable[1]) then
-			Players:FindFirstChild(dataTable[1]):Kick(dataTable[2] or "You have been banned.")
+			Players:FindFirstChild(dataTable[1]):Kick(dataTable[2] or "You have been banned from the game.")
 		end
 	end)
 end, function(err)
@@ -136,7 +153,7 @@ function BanIt.ServerBan(plrUser, reason)
 		table.insert(serverBanTable, plr)
 		local potentialPlr = Players:FindFirstChild(plrUser)
 		if potentialPlr then
-			potentialPlr:Kick(reason or "Banned from the server!")
+			potentialPlr:Kick(reason or "You are banned from the server!")
 		end
 	end, function(err)
 		warn("Error: " .. err)
@@ -150,7 +167,7 @@ function BanIt.Ban(plrUser, reason)
 		saveData()
 		local potentialPlr = Players:FindFirstChild(plrUser)
 		if potentialPlr then
-			potentialPlr:Kick(reason or "Banned from the game!")
+			potentialPlr:Kick(reason or "You are banned from the game!")
 		else
 			xpcall(function()
 				return MS:PublishAsync("Ban", plrUser .. "⌐" .. reason)

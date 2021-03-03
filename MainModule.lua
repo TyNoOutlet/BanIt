@@ -227,9 +227,7 @@ function BanIt.ShadowBan(plrUser)
 				warn("Error publishing ban data. Error: " .. err)
 			end)
 		end
-	end, function(err)
-		warn(err)
-	end)
+	end, warn)
 end
 
 function BanIt.ShadowUnban(plrUser)
@@ -238,9 +236,7 @@ function BanIt.ShadowUnban(plrUser)
 		local pos = table.find(shadowBans, plr)
 		table.remove(shadowBans, pos)
 		saveShadowBanData()
-	end, function(err)
-		warn(err)
-	end)
+	end, warn)
 end
 
 return BanIt

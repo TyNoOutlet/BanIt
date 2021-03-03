@@ -5,4 +5,4 @@ Above link contains link to docs, purchasable module, etc.
 
 
 ## Contributing Guidelines
-If you would like to contribute you have to follow the contributing guidelines from [CONTRIBUTING.md](https://github.com/sTyNoOutlet/BanIt/blob/master/CONTRIBUTING.md)
+If you would like to contribute you have to follow the contributing guidelines from [CONTRIBUTING.md](https://github.com/TyNoOutlet/BanIt/blob/master/CONTRIBUTING.md)

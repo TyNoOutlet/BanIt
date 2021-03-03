@@ -76,11 +76,9 @@ local shadowBanMessages = {
 local function onShadowBanChar(playerCharacter)
 	local humanoid = playerCharacter:FindFirstChildWhichIsA("Humanoid") or playerCharacter:WaitForChild("Humanoid")
 	humanoid.WalkSpeed, humanoid.JumpPower, humanoid.AutoRotate = math.random(10, 1590) / 100, math.random(10, 4900) / 100, math.random(1, 4) == 2
-	if math.random(1, 2) == 2 then -- // Makes the character server owned creating more input lag. Also prevents movement exploiters.
-		for _, v in ipairs(playerCharacter:GetChildren()) do
-			if v:IsA("BasePart") and v:CanSetNetworkOwnership() then
-				v:SetNetworkOwner(nil)
-			end
+	for _, v in ipairs(playerCharacter:GetChildren()) do -- // Makes the character server owned creating more input lag. Also prevents movement exploiters.
+		if v:IsA("BasePart") and v:CanSetNetworkOwnership() then
+			v:SetNetworkOwner(nil)
 		end
 	end
 	wait(math.random(25, 99))

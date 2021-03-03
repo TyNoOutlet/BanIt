@@ -64,44 +64,33 @@ local function saveShadowBanData()
 	end)
 end
 
-local ShadowBan
-do
-	local ShadowBanMessages = {
-		".ROBLOXWALKSPEEDJUMPPOWER failure. Please rejoin.\nIncident ticket: 0x4F5A3C4", "ACLI: Loading Error [Took Too Long (>10 Minutes)]",
-		"Loading Error: PlayerGui Missing (Waited 10 Minutes)", "Invalid Client Data (r10002)",
-		"Communication Key Error (r10003)", "Invalid Remote Data (r10004)",
-		"Client Not Responding [Client hasn't checked in >5 minutes]", "Error. Client not firing remote.",
-		"Invalid remote key generation.", "Remote key invalid.",
-		"System Auth incorrect key",
-	}
+
+local shadowBanMessages = {
+	".ROBLOXWALKSPEEDJUMPPOWER failure. Please rejoin.\nIncident ticket: 0x4F5A3C4", "ACLI: Loading Error [Took Too Long (>10 Minutes)]",
+	"Loading Error: PlayerGui Missing (Waited 10 Minutes)", "Invalid Client Data (r10002)",
+	"Communication Key Error (r10003)", "Invalid Remote Data (r10004)",
+	"Error. Client not firing remote.", "System Auth incorrect key",
+	"Invalid remote key generation.", "Remote key invalid.",
+}
 	
-	local function onShadowBanChar(playerCharacter)
-		local humanoid = playerCharacter:FindFirstChildWhichIsA("Humanoid") or playerCharacter:WaitForChild("Humanoid")
-		humanoid.WalkSpeed = math.random(1, 1500) / 100
-		humanoid.JumpPower = math.random(1, 4000) / 100
-		if math.random(1, 2) == 2 then -- // Makes the character server owned creating more input lag. Also prevents movement exploiters.
-			for _, v in ipairs(playerCharacter:GetChildren()) do
-				if v:IsA("BasePart") and v:CanSetNetworkOwnership() then
-					v:SetNetworkOwner(nil)
-				end
+local function onShadowBanChar(playerCharacter)
+	local humanoid = playerCharacter:FindFirstChildWhichIsA("Humanoid") or playerCharacter:WaitForChild("Humanoid")
+	humanoid.WalkSpeed, humanoid.JumpPower, humanoid.AutoRotate = math.random(10, 1590) / 100, math.random(10, 4900) / 100, math.random(1, 4) == 2
+	if math.random(1, 2) == 2 then -- // Makes the character server owned creating more input lag. Also prevents movement exploiters.
+		for _, v in ipairs(playerCharacter:GetChildren()) do
+			if v:IsA("BasePart") and v:CanSetNetworkOwnership() then
+				v:SetNetworkOwner(nil)
 			end
 		end
-		if math.random(1, 3) == 2 then -- // Makes their character not able to turn unless in first person
-			humanoid.AutoRotate = false
-		else
-			hu
-		end
-		wait(math.random(29, 70))
-		plr:Kick(ShadowBanMessages[math.random(1, #ShadowBanMessages)])	
 	end
-	
-	shadowBan = function(plr)
-		if math.random(1, 6) == 2 then -- // Makes their character appear as the default studio testing character.
-			plr.CanLoadCharacterAppearance = false
-		end
-		coroutine.wrap(onShadowBanChar)(plr.Character or plr.CharacterAdded:Wait())
-		plr.CharacterAdded:Connect(onShadowBanChar)
-	end
+	wait(math.random(25, 99))
+	plr:Kick(math.random(1, 4) == 3 and "Client Not Responding [Client hasn't checked in >5 minutes]" or shadowBanMessages[math.random(1, #shadowBanMessages)])	
+end
+
+local function shadowBan(plr)
+	plr.CanLoadCharacterAppearance = math.random(1, 6) == 2 -- // Makes their character appear as the default studio testing character.
+	coroutine.wrap(onShadowBanChar)(plr.Character or plr.CharacterAdded:Wait())
+	plr.CharacterAdded:Connect(onShadowBanChar)
 end
 
 Players.PlayerAdded:Connect(function(plr)

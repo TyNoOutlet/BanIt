@@ -149,6 +149,7 @@ local BanIt = {}
 
 function BanIt.ServerBan(plrUser, reason)
 	xpcall(function()
+		-- Code below gets the user ID by searching for their username then kicks them
 		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
 		table.insert(serverBanTable, plr)
 		local potentialPlr = Players:FindFirstChild(plrUser)
@@ -162,6 +163,7 @@ end
 
 function BanIt.Ban(plrUser, reason)
 	xpcall(function()
+		-- Code below gets the user ID by searching for their username then kicks them and continues adds them to the database
 		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
 		table.insert(globalBans, plr)
 		saveData()
@@ -182,6 +184,7 @@ end
 
 function BanIt.Unban(plrUser)
 	xpcall(function()
+		-- Code below gets the user ID by searching for their username then searches for them in the database and proceeds to remove them and save data
 		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
 		local pos = table.find(globalBans, plr)
 		table.remove(globalBans, pos)
@@ -193,6 +196,7 @@ end
 
 function BanIt.ServerUnban(plrUser)
 	xpcall(function()
+		-- Code below gets the user ID by searching for their username then searches for them in the serverbantable and continues to remove them
 		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
 		local pos = table.find(serverBanTable, plr)
 		table.remove(serverBanTable, pos)
@@ -203,6 +207,8 @@ end
 
 function BanIt.TimedBan(plrUser, num, numType)
 	xpcall(function()
+		-- Code below performs an if-statement to see how many seconds a user needs to be banned for in minutes/hours or days and then gets a user id from a players name
+		-- Code then proceeds to get the time from the os.time() function and kicks the user for the specified amount of time
 		if numType:lower() == "minutes" then
 			num *= 60
 		elseif numType:lower() == "hours" then
@@ -231,6 +237,7 @@ end
 
 function BanIt.ShadowBan(plrUser)
 	xpcall(function()
+		-- Code finds first child (localplayer) below gets the user ID by searching for their username then kicks them with a false error
 		local plr = Players:FindFirstChild(plrUser)
 		local plrId = assert(Players:GetUserIdFromNameAsync(plrUser), "Not found a player with that name")
 		table.insert(shadowBans, plrId)
@@ -249,6 +256,7 @@ end
 
 function BanIt.ShadowUnban(plrUser)
 	xpcall(function()
+		-- Code below gets the user ID by searching for their username then removes the user from the shadowban datastore
 		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "Not found a player with that name")
 		local pos = table.find(shadowBans, plr)
 		table.remove(shadowBans, pos)

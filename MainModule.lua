@@ -11,9 +11,9 @@ local serverBanTable = {}
 local Players = game:GetService("Players")
 local DSS = game:GetService("DataStoreService")
 local MS = game:GetService("MessagingService")
-local banStore = DSS:GetDataStore("BanStore" .. game.PlaceId .. "123456789")
-local timedBanStore = DSS:GetDataStore("TimedBanStore" .. game.PlaceId .. "123456789")
-local shadowBanStore = DSS:GetDataStore("ShadowBanStore".. game.PlaceId .. "123456789")
+local banStore = DSS:GetDataStore("BanStore123456789")
+local timedBanStore = DSS:GetDataStore("TimedBanStore123456789")
+local shadowBanStore = DSS:GetDataStore("ShadowBanStore123456789")
 local globalBans, timedBans, shadowBans = {}, {}, {}
 
 xpcall(function()

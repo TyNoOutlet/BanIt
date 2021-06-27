@@ -2,7 +2,7 @@
 -- Creator: Ty_Scripts
 -- Date created: 2/26/2021 16:00 UTC-5
 -- More info: https://devforum.roblox.com/t/banit-simple-ban-module-for-anyone/1074218
--- Version: 8
+-- Version: 9
 
 -- // VARIABLES
 
@@ -14,7 +14,9 @@ local MS = game:GetService("MessagingService")
 local banStore = DSS:GetDataStore("BanStore123456789")
 local timedBanStore = DSS:GetDataStore("TimedBanStore123456789")
 local shadowBanStore = DSS:GetDataStore("ShadowBanStore123456789")
-local globalBans, timedBans, shadowBans = {}, {}, {}
+local unbannableStore = DSS:GetDataStore("UnbannableStore1234567890")
+
+local globalBans, timedBans, shadowBans, unbannables = {}, {}, {}, {}
 
 xpcall(function()
 	globalBans = banStore:GetAsync("Bans") or {}
@@ -30,6 +32,12 @@ end)
 
 xpcall(function()
 	shadowBans = shadowBanStore:GetAsync("ShadowBans") or {}
+end, function(err)
+	warn("BanIt | DataStore failed. Try turning on Studio Access to API Services. Error: " .. err)
+end)
+
+xpcall(function()
+	unbannables = unbannableStore:GetAsync("Unbannables") or {}
 end, function(err)
 	warn("BanIt | DataStore failed. Try turning on Studio Access to API Services. Error: " .. err)
 end)
@@ -64,6 +72,15 @@ local function saveShadowBanData()
 	end)
 end
 
+local function saveUnbannableData()
+	xpcall(function()
+		unbannableStore:SetAsync("Unbannables", unbannables)
+		print("BanIt | Successfully saved!")
+	end, function(err)
+		warn("BanIt | Data saving failed! Error: " .. err)
+	end)
+end
+
 
 local shadowBanMessages = {
 	".ROBLOXWALKSPEEDJUMPPOWER failure. Please rejoin.\nIncident ticket: 0x4F5A3C4", "ACLI: Loading Error [Took Too Long (>10 Minutes)]",
@@ -72,7 +89,7 @@ local shadowBanMessages = {
 	"Error. Client not firing remote.", "System Auth incorrect key",
 	"Invalid remote key generation.", "Remote key invalid.",
 }
-	
+
 local function onShadowBanChar(playerCharacter)
 	local humanoid = playerCharacter:FindFirstChildWhichIsA("Humanoid") or playerCharacter:WaitForChild("Humanoid")
 	humanoid.WalkSpeed, humanoid.JumpPower, humanoid.AutoRotate = math.random(10, 1590) / 100, math.random(10, 4900) / 100, math.random(1, 4) == 2
@@ -82,7 +99,7 @@ local function onShadowBanChar(playerCharacter)
 		end
 	end
 	wait(math.random(25, 99))
-	plr:Kick(math.random(1, 4) == 3 and "Client Not Responding [Client hasn't checked in >5 minutes]" or shadowBanMessages[math.random(1, #shadowBanMessages)])	
+	Players:GetPlayerFromCharacter(playerCharacter):Kick(math.random(1, 4) == 3 and "Client Not Responding [Client hasn't checked in >5 minutes]" or shadowBanMessages[math.random(1, #shadowBanMessages)])	
 end
 
 local function shadowBan(plr)
@@ -92,9 +109,9 @@ local function shadowBan(plr)
 end
 
 Players.PlayerAdded:Connect(function(plr)
-	if table.find(globalBans, plr.UserId) or table.find(serverBanTable, plr.UserId) then
+	if (table.find(globalBans, plr.UserId) or table.find(serverBanTable, plr.UserId)) and table.find(unbannables, plr.UserId) == nil then
 		plr:Kick("You are banned from the game!")
-	elseif timedBans[tostring(plr.UserId)] ~= nil then
+	elseif timedBans[tostring(plr.UserId)] ~= nil and table.find(unbannables, plr.UserId) == nil then
 		for k, v in pairs(timedBans) do
 			print(k, v)
 		end
@@ -114,8 +131,10 @@ Players.PlayerAdded:Connect(function(plr)
 				print("No data found")
 			end
 		end
-	elseif table.find(shadowBans, plr.UserId) then
+	elseif table.find(shadowBans, plr.UserId) and table.find(unbannables, plr.UserId) == nil then
 		shadowBan(plr)
+	elseif table.find(unbannables, plr.UserId) ~= nil then
+		print("User is an unbannable!")
 	else
 		print("No data found")
 	end
@@ -151,6 +170,7 @@ function BanIt.ServerBan(plrUser, reason)
 	xpcall(function()
 		-- Code below gets the user ID by searching for their username then kicks them
 		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
+		if table.find(unbannables, plr) ~= nil then return end
 		table.insert(serverBanTable, plr)
 		local potentialPlr = Players:FindFirstChild(plrUser)
 		if potentialPlr then
@@ -165,6 +185,7 @@ function BanIt.Ban(plrUser, reason)
 	xpcall(function()
 		-- Code below gets the user ID by searching for their username then kicks them and continues adds them to the database
 		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
+		if table.find(unbannables, plr) ~= nil then return end
 		table.insert(globalBans, plr)
 		saveData()
 		local potentialPlr = Players:FindFirstChild(plrUser)
@@ -217,6 +238,7 @@ function BanIt.TimedBan(plrUser, num, numType)
 			num *= 86400
 		end
 		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
+		if table.find(unbannables, plr) ~= nil then return end
 		local current = os.time()
 		timedBans[plr] = current .. ";" .. num
 		print(timedBans[plr])
@@ -239,6 +261,7 @@ function BanIt.ShadowBan(plrUser)
 	xpcall(function()
 		-- Code finds first child (localplayer) below gets the user ID by searching for their username then kicks them with a false error
 		local plr = Players:FindFirstChild(plrUser)
+		if table.find(unbannables, plr) ~= nil then return end
 		local plrId = assert(Players:GetUserIdFromNameAsync(plrUser), "Not found a player with that name")
 		table.insert(shadowBans, plrId)
 		saveShadowBanData()
@@ -264,4 +287,24 @@ function BanIt.ShadowUnban(plrUser)
 	end, warn)
 end
 
+function BanIt.SetUnbannable(plrUser)
+	xpcall(function()
+		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
+		table.insert(unbannables, plr)
+		saveUnbannableData()
+	end, function(err)
+		warn("Error: " .. err)
+	end)
+end
+
+function BanIt.SetBannable(plrUser)
+	xpcall(function()
+		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
+		if table.find(unbannables, plr) == nil then return end
+		table.remove(unbannables, table.find(unbannables, plr))
+		saveUnbannableData()
+	end, function(err)
+		warn("Error: " .. err)
+	end)
+end
 return BanIt

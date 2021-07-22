@@ -142,7 +142,7 @@ end)
 
 xpcall(function()
 	return MS:SubscribeAsync("Ban", function(message)
-		local dataTable = string.split(message.Data, "⌐")
+		local dataTable = string.split(message.Data, "â")
 		if Players:FindFirstChild(dataTable[1]) then
 			Players:FindFirstChild(dataTable[1]):Kick(dataTable[2] or "You have been banned from the game.")
 		end
@@ -167,6 +167,7 @@ end)
 local BanIt = {}
 
 function BanIt.ServerBan(plrUser, reason)
+	reason = reason or ""
 	xpcall(function()
 		-- Code below gets the user ID by searching for their username then kicks them
 		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
@@ -182,6 +183,7 @@ function BanIt.ServerBan(plrUser, reason)
 end
 
 function BanIt.Ban(plrUser, reason)
+	reason = reason or ""
 	xpcall(function()
 		-- Code below gets the user ID by searching for their username then kicks them and continues adds them to the database
 		local plr = assert(Players:GetUserIdFromNameAsync(plrUser), "No player found in database!")
@@ -193,7 +195,7 @@ function BanIt.Ban(plrUser, reason)
 			potentialPlr:Kick(reason or "You are banned from the game!")
 		else
 			xpcall(function()
-				return MS:PublishAsync("Ban", plrUser .. "⌐" .. reason)
+				return MS:PublishAsync("Ban", plrUser .. "â" .. reason)
 			end, function(err)
 				warn("Ban data failed to publish. Error: " .. err)
 			end)
@@ -247,7 +249,7 @@ function BanIt.TimedBan(plrUser, num, numType)
 			Players[plrUser]:Kick("Banned for " .. num .. " " .. numType .. " from the game.")
 		else
 			xpcall(function()
-				MS:PublishAsync("Ban", plrUser .. "⌐" .. "Banned for " .. num .. " " .. numType .. " from the game.")
+				MS:PublishAsync("Ban", plrUser .. "â" .. "Banned for " .. num .. " " .. numType .. " from the game.")
 			end, function(err)
 				warn("Error publishing ban data. Error: " .. err)
 			end)

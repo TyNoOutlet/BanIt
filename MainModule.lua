@@ -2,11 +2,9 @@
 -- Creator: Ty_Scripts
 -- Date created: 2/26/2021 16:00 UTC-5
 -- More info: https://devforum.roblox.com/t/banit-simple-ban-module-for-anyone/1074218
--- Version: 9
+-- Version: 10
 
 -- // VARIABLES
-
-local serverBanTable = {}
 
 local Players = game:GetService("Players")
 local DSS = game:GetService("DataStoreService")
@@ -15,8 +13,9 @@ local banStore = DSS:GetDataStore("BanStore123456789")
 local timedBanStore = DSS:GetDataStore("TimedBanStore123456789")
 local shadowBanStore = DSS:GetDataStore("ShadowBanStore123456789")
 local unbannableStore = DSS:GetDataStore("UnbannableStore1234567890")
+local groupStore = DSS:GetDataStore("GroupStore1234567890")
 
-local globalBans, timedBans, shadowBans, unbannables = {}, {}, {}, {}
+local globalBans, timedBans, shadowBans, unbannables, groupBans, serverBanTable = {}, {}, {}, {}, {}, {}
 
 xpcall(function()
 	globalBans = banStore:GetAsync("Bans") or {}
@@ -38,6 +37,12 @@ end)
 
 xpcall(function()
 	unbannables = unbannableStore:GetAsync("Unbannables") or {}
+end, function(err)
+	warn("BanIt | DataStore failed. Try turning on Studio Access to API Services. Error: " .. err)
+end)
+
+xpcall(function()
+	groupBans = groupStore:GetAsync("GroupBans") or {}
 end, function(err)
 	warn("BanIt | DataStore failed. Try turning on Studio Access to API Services. Error: " .. err)
 end)
@@ -81,6 +86,14 @@ local function saveUnbannableData()
 	end)
 end
 
+local function saveGroupData()
+	xpcall(function()
+		groupStore:SetAsync("Unbannables", unbannables)
+		print("BanIt | Successfully saved!")
+	end, function(err)
+		warn("BanIt | Data saving failed! Error: " .. err)
+	end)
+end
 
 local shadowBanMessages = {
 	".ROBLOXWALKSPEEDJUMPPOWER failure. Please rejoin.\nIncident ticket: 0x4F5A3C4", "ACLI: Loading Error [Took Too Long (>10 Minutes)]",
@@ -98,8 +111,8 @@ local function onShadowBanChar(playerCharacter)
 			v:SetNetworkOwner(nil)
 		end
 	end
-	wait(math.random(25, 99))
-	Players:GetPlayerFromCharacter(playerCharacter):Kick(math.random(1, 4) == 3 and "Client Not Responding [Client hasn't checked in >5 minutes]" or shadowBanMessages[math.random(1, #shadowBanMessages)])	
+	task.wait(math.random(25, 99))
+	Players:GetPlayerFromCharacter(playerCharacter):Kick(math.random(1, 4) == 3 and "Client Not Responding [Client hasn't checked in >5 minutes]" or shadowBanMessages[math.random(1, #shadowBanMessages)])
 end
 
 local function shadowBan(plr)
@@ -136,6 +149,11 @@ Players.PlayerAdded:Connect(function(plr)
 	elseif table.find(unbannables, plr.UserId) ~= nil then
 		print("User is an unbannable!")
 	else
+		for i, v in ipairs(groupBans) do
+			if plr:IsInGroup(v) then
+				plr:Kick("You are banned from the game!")
+			end
+		end
 		print("No data found")
 	end
 end)
@@ -156,6 +174,19 @@ xpcall(function()
 		local potentialPlr = Players:FindFirstChild(message.Data)
 		if potentialPlr then
 			shadowBan(potentialPlr)
+		end
+	end)
+end, function(err)
+	warn("BanIt | Subscribing to ban list failed! Error: " .. err)
+end)
+
+xpcall(function()
+	return MS:SubscribeAsync("GroupBan", function(message)
+		local dataTable = string.split(message.Data, "â")
+		for i, v in ipairs(Players:GetChildren()) do
+			if v:IsInGroup(tonumber(dataTable[1])) then
+				v:Kick(dataTable[2] or "You have been banned from the game because you are in the group with the id: " .. dataTable[1])
+			end
 		end
 	end)
 end, function(err)
@@ -309,4 +340,34 @@ function BanIt.SetBannable(plrUser)
 		warn("Error: " .. err)
 	end)
 end
+
+function BanIt.GroupBan(groupId, reason)
+	xpcall(function()
+		table.insert(groupBans, groupId)
+		saveGroupData()
+		for i, v in ipairs(Players:GetChildren()) do
+			if v:IsInGroup(groupId) then
+				v:Kick(reason or "You have been banned from the game because you are in the group with the id: " .. tostring(groupId))
+			else
+				xpcall(function()
+					return MS:PublishAsync("GroupBan", tostring(groupId) .. "â" .. reason)
+				end, function(err)
+					warn("Ban data failed to publish. Error: " .. err)
+				end)
+			end
+		end
+	end, function(err)
+		warn("Error: " .. err)
+	end)
+end
+
+function BanIt.GroupUnban(groupId)
+	xpcall(function()
+		table.remove(groupBans, table.find(groupBans, groupId))
+		saveGroupData()
+	end, function(err)
+		warn("Error: " .. err)
+	end)
+end
+
 return BanIt

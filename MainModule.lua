@@ -121,7 +121,7 @@ local function shadowBan(plr)
 		end
 
 		task.wait(math.random(25, 99))
-		Players:GetPlayerFromCharacter(playerCharacter):Kick(math.random(1, 4) == 3 and "Client Not Responding [Client hasn't checked in >5 minutes]" or shadowBanMessages[math.random(1, #shadowBanMessages)])
+		plr:Kick(math.random(1, 4) == 3 and "Client Not Responding [Client hasn't checked in >5 minutes]" or shadowBanMessages[math.random(1, #shadowBanMessages)])
 	end)()
 	if plr.Character then
 		coroutine.wrap(onShadowBanChar)(plr.Character)

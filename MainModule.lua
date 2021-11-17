@@ -7,13 +7,13 @@
 -- // VARIABLES
 
 local Players = game:GetService("Players")
-local DSS = game:GetService("DataStoreService")
-local MS = game:GetService("MessagingService")
-local banStore = DSS:GetDataStore("BanStore123456789")
-local timedBanStore = DSS:GetDataStore("TimedBanStore123456789")
-local shadowBanStore = DSS:GetDataStore("ShadowBanStore123456789")
-local unbannableStore = DSS:GetDataStore("UnbannableStore1234567890")
-local groupStore = DSS:GetDataStore("GroupStore1234567890")
+local DataStoreService = game:GetService("DataStoreService")
+local MessagingService = game:GetService("MessagingService")
+local banStore = DataStoreService:GetDataStore("BanStore123456789")
+local timedBanStore = DataStoreService:GetDataStore("TimedBanStore123456789")
+local shadowBanStore = DataStoreService:GetDataStore("ShadowBanStore123456789")
+local unbannableStore = DataStoreService:GetDataStore("UnbannableStore1234567890")
+local groupStore = DataStoreService:GetDataStore("GroupStore1234567890")
 
 local globalBans, timedBans, shadowBans, unbannables, groupBans, serverBanTable = {}, {}, {}, {}, {}, {}
 
@@ -111,13 +111,21 @@ local function onShadowBanChar(playerCharacter)
 			v:SetNetworkOwner(nil)
 		end
 	end
-	task.wait(math.random(25, 99))
-	Players:GetPlayerFromCharacter(playerCharacter):Kick(math.random(1, 4) == 3 and "Client Not Responding [Client hasn't checked in >5 minutes]" or shadowBanMessages[math.random(1, #shadowBanMessages)])
 end
 
 local function shadowBan(plr)
 	plr.CanLoadCharacterAppearance = math.random(1, 6) == 2 -- // Makes their character appear as the default studio testing character.
-	coroutine.wrap(onShadowBanChar)(plr.Character or plr.CharacterAdded:Wait())
+	coroutine.wrap(function()
+		if not plr.Character then
+			plr.CharacterAdded:Wait()
+		end
+
+		task.wait(math.random(25, 99))
+		Players:GetPlayerFromCharacter(playerCharacter):Kick(math.random(1, 4) == 3 and "Client Not Responding [Client hasn't checked in >5 minutes]" or shadowBanMessages[math.random(1, #shadowBanMessages)])
+	end)()
+	if plr.Character then
+		coroutine.wrap(onShadowBanChar)(plr.Character)
+	end
 	plr.CharacterAdded:Connect(onShadowBanChar)
 end
 
@@ -159,7 +167,7 @@ Players.PlayerAdded:Connect(function(plr)
 end)
 
 xpcall(function()
-	return MS:SubscribeAsync("Ban", function(message)
+	return MessagingService:SubscribeAsync("Ban", function(message)
 		local dataTable = string.split(message.Data, "â")
 		if Players:FindFirstChild(dataTable[1]) then
 			Players:FindFirstChild(dataTable[1]):Kick(dataTable[2] or "You have been banned from the game.")
@@ -170,7 +178,7 @@ end, function(err)
 end)
 
 xpcall(function()
-	return MS:SubscribeAsync("ShadowBan", function(message)
+	return MessagingService:SubscribeAsync("ShadowBan", function(message)
 		local potentialPlr = Players:FindFirstChild(message.Data)
 		if potentialPlr then
 			shadowBan(potentialPlr)
@@ -181,7 +189,7 @@ end, function(err)
 end)
 
 xpcall(function()
-	return MS:SubscribeAsync("GroupBan", function(message)
+	return MessagingService:SubscribeAsync("GroupBan", function(message)
 		local dataTable = string.split(message.Data, "â")
 		for i, v in ipairs(Players:GetChildren()) do
 			if v:IsInGroup(tonumber(dataTable[1])) then
@@ -226,7 +234,7 @@ function BanIt.Ban(plrUser, reason)
 			potentialPlr:Kick(reason or "You are banned from the game!")
 		else
 			xpcall(function()
-				return MS:PublishAsync("Ban", plrUser .. "â" .. reason)
+				return MessagingService:PublishAsync("Ban", plrUser .. "â" .. reason)
 			end, function(err)
 				warn("Ban data failed to publish. Error: " .. err)
 			end)
@@ -280,7 +288,7 @@ function BanIt.TimedBan(plrUser, num, numType)
 			Players[plrUser]:Kick("Banned for " .. num .. " " .. numType .. " from the game.")
 		else
 			xpcall(function()
-				MS:PublishAsync("Ban", plrUser .. "â" .. "Banned for " .. num .. " " .. numType .. " from the game.")
+				MessagingService:PublishAsync("Ban", plrUser .. "â" .. "Banned for " .. num .. " " .. numType .. " from the game.")
 			end, function(err)
 				warn("Error publishing ban data. Error: " .. err)
 			end)
@@ -302,7 +310,7 @@ function BanIt.ShadowBan(plrUser)
 			shadowBan(plr)
 		else
 			xpcall(function()
-				MS:PublishAsync("ShadowBan", plrUser)
+				MessagingService:PublishAsync("ShadowBan", plrUser)
 			end, function(err)
 				warn("Error publishing ban data. Error: " .. err)
 			end)
@@ -350,7 +358,7 @@ function BanIt.GroupBan(groupId, reason)
 				v:Kick(reason or "You have been banned from the game because you are in the group with the id: " .. tostring(groupId))
 			else
 				xpcall(function()
-					return MS:PublishAsync("GroupBan", tostring(groupId) .. "â" .. reason)
+					return MessagingService:PublishAsync("GroupBan", tostring(groupId) .. "â" .. reason)
 				end, function(err)
 					warn("Ban data failed to publish. Error: " .. err)
 				end)

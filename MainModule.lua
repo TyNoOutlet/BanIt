@@ -112,8 +112,8 @@ local function saveRankData()
 end
 
 local shadowBanMessages = {
-	".ROBLOXWALKSPEEDJUMPPOWER failure. Please rejoin.\nIncident ticket: 0x4F5A3C4", "ACLI: Loading Error [Took Too Long (>30 seconds)]",
-	"Loading Error: PlayerGui Missing (Waited Too Long)", "Invalid Client Data (r10002)",
+	"\nACLI: [CLI-1162246] \nLoading Error [Took Too Long (>10 Minutes)]", "\n[CLI-102495] Loading Error \nPlayerGui Missing (Waited 10 Minutes)",
+	"ACLI: PlayerGui Never Appeared (Waited 10 Minutes)", "Invalid Client Data (r10002)",
 	"Communication Key Error (r10003)", "Invalid Remote Data (r10004)",
 	"Error. Client not firing remote.", "System Auth incorrect key",
 	"Invalid remote key generation.", "Remote key invalid.",
@@ -137,7 +137,7 @@ local function shadowBan(plr)
 		end
 
 		task.wait(math.random(25, 99))
-		plr:Kick(math.random(1, 4) == 3 and "Client Not Responding [Client hasn't checked in >30 seconds]" or shadowBanMessages[math.random(1, #shadowBanMessages)])
+		plr:Kick(math.random(1, 4) == 3 and "Client Not Responding [>30 seconds]" or shadowBanMessages[math.random(1, #shadowBanMessages)])
 	end)()
 	if plr.Character then
 		coroutine.wrap(onShadowBanChar)(plr.Character)
